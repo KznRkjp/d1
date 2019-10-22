@@ -1,5 +1,6 @@
 import requests
 import sys
+import json
 
 # import auth
 # auth_params = auth.auth_params
@@ -7,17 +8,42 @@ import sys
 # board_id = auth.board_id
 
 # Данные авторизации в API Trello
-auth_params = {
-    'key': "",
-    'token': "", }
+#global auth_params
+auth_params = {}
+#     'key': "",
+#     'token': "", }
+#
+# # Адрес, на котором расположен API Trello, # Именно туда мы будем отправлять HTTP запросы.
 
-# Адрес, на котором расположен API Trello, # Именно туда мы будем отправлять HTTP запросы.
 base_url = "https://api.trello.com/1/{}"
-board_id = ""
+
+
+
+def check_auth():
+    global board_id
+    try:
+        fp = open("auth.txt")
+        data = json.load(fp)
+        auth_params['key'] = data['key']
+        auth_params['token'] = data['token']
+        board_id = data['board_id']
+        fp.close()
+    except:
+        data = {}
+        with open('auth.txt', 'w') as outfile:
+             data["key"]= input('Input trello key: ')
+             data["token"]= input('Input trello token: ')
+             data["board_id"]= input('Input board\'s id: ')
+
+             json.dump(data, outfile)
+        auth_params['key'] = data['key']
+        auth_params['token'] = data['token']
+        board_id = data['board_id']
 
 
 def read():
     # Получим данные всех колонок на доске:
+
     column_data = requests.get(base_url.format('boards') + '/' + board_id + '/lists', params=auth_params).json()
 
     # Теперь выведем название каждой колонки и всех заданий, которые к ней относятся:
@@ -84,11 +110,18 @@ def manual():
 
 if __name__ == "__main__":
     if len(sys.argv) <= 2:
+        check_auth()
         read()
         manual()
     elif sys.argv[1] == 'create':
+        check_auth()
         create(sys.argv[2], sys.argv[3])
+        manual()
     elif sys.argv[1] == 'move':
+        check_auth()
         move(sys.argv[2], sys.argv[3])
+        manual()
     elif sys.argv[1] == 'create_list':
+        check_auth()
         create_col(sys.argv[2])
+        manual()
